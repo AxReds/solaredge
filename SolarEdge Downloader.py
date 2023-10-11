@@ -96,7 +96,7 @@ for year in range(StartYear, CurrentYear + 1):
 
     if year < CurrentYear and year >= LastUpdateDateTime.year:
         url_year = f"{EnergyUrl}&timeUnit={Day}&startDate={year}-01-01&endDate={year}-12-31"
-        file_name_year = f"{year} - {SiteDetails['details']['name']}{SiteID}.csv"
+        file_name_year = f"{year} - {SiteDetails['details']['name']}{SolarEdge_SiteID}.csv"
         if not os.path.exists(file_name_year):
             get_energy_data_remove_nulls(url_year, file_name_year)
         else:

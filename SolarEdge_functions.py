@@ -14,18 +14,21 @@ def get_energy_data_remove_nulls(url, file_name):
     data = [row['value'] for row in energy_data['energy']['values'] if row['value'] is not None]
     with open(file_name, 'w', newline='') as csvfile:
         csvwriter = csv.writer(csvfile, delimiter=';')
-        csvwriter.writerow(["Value"])
+        csvwriter.writerow(["Date/Time;Value"])
         csvwriter.writerows([[row] for row in data])
 
 # Function to get energy data and replace null values with "0,0"
 def get_energy_data_replace_nulls(url, file_name):
     response = requests.get(url)
     energy_data = response.json()
+    #
+    #Replace null values with "0,0"
     for row in energy_data['energy']['values']:
         if row['value'] is None:
             row['value'] = "0,0"
+
     data = [[row['value']] for row in energy_data['energy']['values']]
     with open(file_name, 'w', newline='') as csvfile:
         csvwriter = csv.writer(csvfile, delimiter=';')
-        #csvwriter.writerow(["date"],["Value"])
+        csvwriter.writerow(["Date/Time;Value"])
         csvwriter.writerows(data)
