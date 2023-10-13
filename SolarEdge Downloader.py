@@ -12,7 +12,7 @@ with open('config.json', 'r') as config_file:
 
 # Access SolarEdge information in the JSON file to set constants values
 SolarEdgeConfig = config_data['SolarEdge']
-export_file = SolarEdgeConfig['OutputFile']
+SolarEdge_ExportFile = SolarEdgeConfig['OutputFile']
 SolarEdge_SiteID = SolarEdgeConfig['SiteID']
 SolarEdge_ApiKey = SolarEdgeConfig['ApiKey']
 
@@ -26,6 +26,8 @@ DataPeriodUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/da
 OverviewUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/overview?api_key={SolarEdge_ApiKey}"
 EnergyUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/energy?api_key={SolarEdge_ApiKey}"
 DetailsUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/details?api_key={SolarEdge_ApiKey}"
+PowerDetailsUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/powerDetails?api_key={SolarEdge_ApiKey}"
+
 
 #
 # Get site details and last update time from the overview API endpoint
@@ -61,43 +63,6 @@ DataPeriod = response_period.json()
 StartYear = datetime.strptime(DataPeriod['dataPeriod']['startDate'], '%Y-%m-%d').year
 CurrentYear = datetime.now().year
 
-# Loop through years and months to download energy data
-for year in range(StartYear, CurrentYear + 1):
-    if year == CurrentYear:
-        if StartYear == CurrentYear:
-            month = datetime.strptime(DataPeriod['dataPeriod']['startDate'], '%Y-%m-%d').month
-        else:
-            month = 1
-        last_month = datetime.now().month if LastUpdateDateTime.month >= datetime.now().month else LastUpdateDateTime.month + 1
-    else:
-        if year == StartYear:
-            month = datetime.strptime(DataPeriod['dataPeriod']['startDate'], '%Y-%m-%d').month
-        else:
-            month = 1
-        last_month = 13
-
-    for month in range(month, last_month):
-        last_day_of_month = (datetime(year, month % 12 + 1, 1) - timedelta(days=1)).day
-        str_month = "{:02d}".format(month)
-        file_name = f"{year}{str_month} - {SiteDetails['details']['name']}{SolarEdge_SiteID}.csv"
-        file_name_15min = f"{year}{str_month} - {SiteDetails['details']['name']}{SolarEdge_SiteID}-15min.csv"
-        url_day = f"{EnergyUrl}&timeUnit={Day}&startDate={year}-{str_month}-01&endDate={year}-{str_month}-{last_day_of_month}"
-        url_15min = f"{EnergyUrl}&timeUnit={QuarterHour}&startDate={year}-{str_month}-01&endDate={year}-{str_month}-{last_day_of_month}"
-        
-        if not os.path.exists(file_name):
-            get_energy_data_remove_nulls(url_day, file_name)
-        else:
-            print(f"File {file_name} already exists. Script will not download this data again")
-        
-        if not os.path.exists(file_name_15min):
-            get_energy_data_replace_nulls(url_15min, file_name_15min)
-        else:
-            print(f"File {file_name_15min} already exists. Script will not download this data again")
-
-    if year < CurrentYear and year >= LastUpdateDateTime.year:
-        url_year = f"{EnergyUrl}&timeUnit={Day}&startDate={year}-01-01&endDate={year}-12-31"
-        file_name_year = f"{year} - {SiteDetails['details']['name']}{SolarEdge_SiteID}.csv"
-        if not os.path.exists(file_name_year):
-            get_energy_data_remove_nulls(url_year, file_name_year)
-        else:
-            print(f"File {file_name_year} already exists. Script will not download this data again")
+#getAllData (DataPeriod, StartYear, CurrentYear, SiteDetails, SolarEdge_SiteID, EnergyUrl, LastUpdateTime, LastUpdateDateTime)
+getAllDataPVOutFormat (SolarEdge_ExportFile, DataPeriod, StartYear, CurrentYear, PowerDetailsUrl, LastUpdateDateTime)
+print("Export Completed")

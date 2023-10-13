@@ -2,7 +2,7 @@
     "SolarEdge": {
         "ApiKey": "I4795OOTYVARHN6WI3FAG0796LOVYY91",
         "SiteID": "11854",
-        "OutputFile": "SolarEdge_export_file.txt"
+        "OutputFile": "SolarEdge_export_file.csv"
     },
     "PVOutput": {
         "ApiKey": "3b41787f798ef111a3ad1a118f6a1fd0701b0397",
