@@ -55,7 +55,8 @@ os.system("cls" if os.name == "nt" else "clear")
 
 #
 #Print site details
-print(f"\n\nSolareEdge Site {SolarEdge_SiteID} named {SiteDetails.name} has the following details:\n"
+print(f"\n\nSolareEdge Site {SolarEdge_SiteID} has the following details:\n"
+        f" - Name:              {SiteDetails.name}\n"
         f" - Account ID:        {SiteDetails.account_id}\n"
         f" - Status:            {SiteDetails.status}\n"
         f" - Peak Power:        {SiteDetails.peak_power}\n"
