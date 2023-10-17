@@ -66,7 +66,8 @@ class SolarEdge_SiteData:
         response = requests.get(url)
         return response.json()
 
-# Function to get sites data and return a list
+# Function returns a list of sites related to the given token, which is the account api_key.
+# The API accepts parameters for convenient search, sort and pagination.
 def call_SiteList(SolarEdge_ApiKey: str, size: int = 100, startIndex: int = 0, searchText: str = 'Name', sortProperty: str = 'Name', sortOrder: str ='ASC', Status: str = 'All') -> list:
     #Check if searchText is valid
     ALLOWED_SEARCH_TEXT = ["Name","Notes", "Address", "City", "Zip code", "Full address",  "Country"]
@@ -170,7 +171,7 @@ def call_SiteList(SolarEdge_ApiKey: str, size: int = 100, startIndex: int = 0, s
         multiline_data.append(data)
     return (multiline_data)
 
-#Function to get site details and return a list
+# Function returns site details and return a JSON
 def call_SiteDetails(SolarEdge_ApiKey: str, SolarEdge_SiteID:int) -> list:
     #Set Constant URL
     SiteDetailsUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/details?api_key={SolarEdge_ApiKey}"
@@ -186,41 +187,39 @@ def call_SiteDetails(SolarEdge_ApiKey: str, SolarEdge_SiteID:int) -> list:
     SiteDetails = response.json()
     return (SiteDetails)
 
-# Function to get production data and replace null values with "0,0"
-def call_PowerDetailed(SolarEdge_ApiKey: str, SolarEdge_SiteID: int, startTime: str, endTime: str, meters: str = "PRODUCTION") -> list:
+# Function returns the production start and end dates of the site
+def call_SiteData_Start_End_Dates(SolarEdge_ApiKey: str, SolarEdge_SiteID: int) -> list:
     #Set Constant URL
-    PowerDetailsUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/powerDetails?api_key={SolarEdge_ApiKey}&startTime={startTime}-01%2000:00:00&endTime={endTime}%2023:59:59&meters={meters}"
-
-    #Initialize an empty list to store multiline data
-    multiline_data = []
-    
-    # Make a GET request to the specified URL
-    response = requests.get(PowerDetailsUrl)
+    SiteDetailsUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/dataPeriod?api_key={SolarEdge_ApiKey}"
+   
+    #Call api and get site details 
+    response = requests.get(SiteDetailsUrl)
     
     # Check if the request was successful
     if response.status_code != 200:
         print(f"Error in the request: {response.status_code}")
         return
-
-    # Parse the JSON response
-    energy_data = response.json()
     
-    # Access nested data in the JSON
-    meter_telemetries = energy_data['powerDetails']['meters'][0]['values']
+    SiteDetails = response.json()
+    return (SiteDetails)
 
-    #
-    # Replace null values with "0.0" and create multiline data
-    for meter_telemetry in meter_telemetries:
-        date = meter_telemetry['date']
-        value = meter_telemetry.get('value', '0.0')
-        
-        # Create a multiline list with 'date' and 'value' and append it to multiline_data
-        data = [date, value]
-        multiline_data.append(data)
+# Function returns the production start and end dates for all the site owned by the account
+def call_SiteData_Bulk_Start_End_Dates(SolarEdge_ApiKey: str, SolarEdge_SiteIDs: str) -> list:
+    #Set Constant URL
+    SiteDetailsUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteIDs}/dataPeriod?api_key={SolarEdge_ApiKey}"
+   
+    #Call api and get site details 
+    response = requests.get(SiteDetailsUrl)
     
-    return (multiline_data)
+    # Check if the request was successful
+    if response.status_code != 200:
+        print(f"Error in the request: {response.status_code}")
+        return
+    
+    SiteDetails = response.json()
+    return (SiteDetails)
 
-# Function to get production data and replace null values with "0,0"
+# Function returns the site energy measurements and replaces null values with "0.0"
 def call_SiteEnergy(SolarEdge_ApiKey: str, SolarEdge_SiteID: int, startDate: str, endDate: str, timeUnit: str = Day) -> list:
     #Check if timeUnit is valid
     ALLOWED_TIME_UNITS = ["QUARTER_OF_AN_HOUR","HOUR", "DAY", "WEEK", "MONTH", "YEAR"]
@@ -256,6 +255,94 @@ def call_SiteEnergy(SolarEdge_ApiKey: str, SolarEdge_SiteID: int, startDate: str
         else:
             value = meter_telemetry['value']
 
+        
+        # Create a multiline list with 'date' and 'value' and append it to multiline_data
+        data = [date, value]
+        multiline_data.append(data)
+    
+    return (multiline_data)
+
+# Function returns the site total energy produced for a given period and returns a JSON
+def call_SiteEnergy_TimePeriod(SolarEdge_ApiKey: str, SolarEdge_SiteID: int, startDate: str, endDate: str) -> list:
+ #Check if timeUnit is valid
+
+    #Set Constant URL
+    EnergyUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/energy?api_key={SolarEdge_ApiKey}&startDate={startDate}&endDate={endDate}"
+    
+    # Make a GET request to the specified URL
+    response = requests.get(EnergyUrl)
+    
+    # Check if the request was successful
+    if response.status_code != 200:
+        print(f"Error in the request: {response.status_code}")
+        return
+
+    # Parse the JSON response
+    energy_data = response.json()
+
+# Function returns the site power measurements in 15 minutes resolution and replaces null values with "0,0"
+def call_SitePower15mins(SolarEdge_ApiKey: str, SolarEdge_SiteID: int, startTime: str, endTime: str) -> list:
+ #Check if timeUnit is valid
+
+    #Set Constant URL
+    EnergyUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/power?api_key={SolarEdge_ApiKey}&startTime={startTime}%2000:00:00&endTime={endTime}%2023:59:59"
+    
+    # Make a GET request to the specified URL
+    response = requests.get(EnergyUrl)
+    
+    # Check if the request was successful
+    if response.status_code != 200:
+        print(f"Error in the request: {response.status_code}")
+        return
+
+    #Initialize an empty list to store multiline data
+    multiline_data = []
+
+    # Parse the JSON response
+    energy_data = response.json()
+
+    # Access nested data in the JSON
+    meter_telemetries = energy_data['power']['values']
+
+    #
+    # Replace null values with "0.0" and create multiline data
+    for meter_telemetry in meter_telemetries:
+        date = meter_telemetry['date']
+        value = '0.0' if meter_telemetry['value'] is None else meter_telemetry['value']
+        
+        # Create a multiline list with 'date' and 'value' and append it to multiline_data
+        data = [date, value]
+        multiline_data.append(data)
+    
+    return (multiline_data)
+
+# Function returns production data and replaces null values with "0.0"
+def call_PowerDetailed(SolarEdge_ApiKey: str, SolarEdge_SiteID: int, startTime: str, endTime: str, meters: str = "PRODUCTION") -> list:
+    #Set Constant URL
+    PowerDetailsUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/powerDetails?api_key={SolarEdge_ApiKey}&startTime={startTime}-01%2000:00:00&endTime={endTime}%2023:59:59&meters={meters}"
+
+    #Initialize an empty list to store multiline data
+    multiline_data = []
+    
+    # Make a GET request to the specified URL
+    response = requests.get(PowerDetailsUrl)
+    
+    # Check if the request was successful
+    if response.status_code != 200:
+        print(f"Error in the request: {response.status_code}")
+        return
+
+    # Parse the JSON response
+    energy_data = response.json()
+    
+    # Access nested data in the JSON
+    meter_telemetries = energy_data['powerDetails']['meters'][0]['values']
+
+    #
+    # Replace null values with "0.0" and create multiline data
+    for meter_telemetry in meter_telemetries:
+        date = meter_telemetry['date']
+        value = meter_telemetry.get('value', '0.0')
         
         # Create a multiline list with 'date' and 'value' and append it to multiline_data
         data = [date, value]
@@ -308,6 +395,8 @@ def getAllDataPVOutFormat (ApiKey: str, SiteID: int, Operation: int, ExportFile:
                 SolarEdge_DataDictionary = call_PowerDetailed(ApiKey, SiteID, f"{year}-{str_month}", f"{year}-{str_month}-{last_day_of_month}")
             elif Operation == "2":
                 SolarEdge_DataDictionary = call_SiteEnergy(ApiKey, SiteID, f"{year}-{str_month}-01", f"{year}-{str_month}-{last_day_of_month}", QuarterHour)
+            elif Operation == "4":
+                SolarEdge_DataDictionary = call_SitePower15mins(ApiKey, SiteID, f"{year}-{str_month}-01", f"{year}-{str_month}-{last_day_of_month}")
             else:
                 print ("Option not yet available")
                 exit(1)

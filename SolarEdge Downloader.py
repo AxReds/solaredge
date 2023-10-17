@@ -68,9 +68,6 @@ else:
         "This script will only download the data until the date of the last available data")
 
 
-call_SiteList (SolarEdge_ApiKey)
-exit(0)
-
 # Print site details
 print(f"\n\nSolareEdge Site {SolarEdge_SiteID} has the following details:\n"
         f" - Name:              {SiteDetails.name}\n"
@@ -102,5 +99,8 @@ elif choice == "2":
 elif choice == "3":
     print("Il pianeta è stato distrutto!")
     # Inserisci qui il codice per l'opzione 3
+elif choice == "4":
+    getAllDataPVOutFormat (SolarEdge_ApiKey, SolarEdge_SiteID, choice, SolarEdge_ExportFile, DataPeriod, StartYear, CurrentYear, LastUpdateDateTime)
+    print("Export Completed")
 else:
     exit(0)
