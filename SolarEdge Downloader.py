@@ -5,26 +5,35 @@ from datetime import datetime, timedelta
 import json, os
 from SolarEdge_functions import *
 
-# Read information from the JSON file
-with open('config.json', 'r') as config_file:
-    config_data = json.load(config_file)
+#Read information from the JSON file
+try:
+    with open('config.json', 'r') as config_file:
+        SolarEdgeConfig = json.load(config_file)['SolarEdge']
+except FileNotFoundError:
+    print("Error: config.json file not found.")
+    exit(1)
+except json.JSONDecodeError:
+    print("Error: config.json file is not valid JSON.")
+    exit(1)
 
-# Access SolarEdge information in the JSON file to set constants values
-SolarEdgeConfig = config_data['SolarEdge']
+#
+#Access SolarEdge information in the JSON file to set constants values
 SolarEdge_ExportFile = SolarEdgeConfig['OutputFile']
-SolarEdge_SiteID = SolarEdgeConfig['SiteID']
+SolarEdge_SiteID = int(SolarEdgeConfig['SiteID'])
 SolarEdge_ApiKey = SolarEdgeConfig['ApiKey']
 
+#
 #Set other constants
 CurrentDate = datetime.now().strftime('%Y-%m-%d')
 StartDate = CurrentDate
 EndDate = CurrentDate
+SiteDataUrl = f"https://monitoringapi.solaredge.com/sites/list?api_key={SolarEdge_ApiKey}"
+
 DataPeriodUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/dataPeriod?api_key={SolarEdge_ApiKey}"
 OverviewUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/overview?api_key={SolarEdge_ApiKey}"
 EnergyUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/energy?api_key={SolarEdge_ApiKey}"
-DetailsUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/details?api_key={SolarEdge_ApiKey}"
-PowerDetailsUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/powerDetails?api_key={SolarEdge_ApiKey}"
 
+#
 # Get data period information from the API endpoint
 response_period = requests.get(DataPeriodUrl)
 DataPeriod = response_period.json()
@@ -32,48 +41,45 @@ StartYear = datetime.strptime(DataPeriod['dataPeriod']['startDate'], '%Y-%m-%d')
 CurrentYear = datetime.now().year
 
 #
-# Get site details and last update time from the overview API endpoint
-#response_details = requests.get(OverviewUrl)
-SiteDetails = requests.get(DetailsUrl).json()
+#Get site details and last update time from the overview API endpoint
+SiteDetails = SolarEdge_SiteData (SolarEdge_SiteID, SolarEdge_ApiKey)
 
-SolarEdge_SiteName = SiteDetails['details']['name']
-SolarEdge_Status = SiteDetails['details']['status']
-SolarEdge_AccountID = SiteDetails['details']['accountId']
-SolarEdge_Status = SiteDetails['details']['status']
-SolarEdge_PeakPower = SiteDetails['details']['peakPower']
-SolarEdge_installationDate = SiteDetails['details']['installationDate']
-SolarEdge_Currency = SiteDetails['details']['currency']
-
-response_Overview = requests.get(OverviewUrl).json()
-SiteOverview = response_Overview['overview']
-SolarEdge_lifeTimeData_Energy = SiteOverview['lifeTimeData']['energy']
-SolarEdge_lifeRevenue_Energy = SiteOverview['lifeTimeData']['revenue']
-
-LastUpdateTime = SiteOverview['lastUpdateTime'].split()[0]
+#
+#Get last update time 
+LastUpdateTime = SiteDetails.last_update_time.split()[0]
 LastUpdateDateTime = datetime.strptime(LastUpdateTime, '%Y-%m-%d')
 
-
+#
+#Clear screen depending on OS
 os.system("cls" if os.name == "nt" else "clear")
-print(f"\n\nSolareEdge Site {SolarEdge_SiteID} owned by {SolarEdge_SiteName} has the following details:\n"
-        f" - Account ID:     {SolarEdge_AccountID}\n"
-        f" - Status:         {SolarEdge_Status}\n"
-        f" - Peak Power:     {SolarEdge_PeakPower}\n"
-        f" - Installed on:   {SolarEdge_installationDate}\n"
-        f" - Total Energy:   {SolarEdge_lifeTimeData_Energy}\n"
-        f" - Total Revenues: {SolarEdge_lifeRevenue_Energy} {SolarEdge_Currency} \n"
-        "\n")
 
+#
+#Print site details
+print(f"\n\nSolareEdge Site {SolarEdge_SiteID} named {SiteDetails.name} has the following details:\n"
+        f" - Account ID:        {SiteDetails.account_id}\n"
+        f" - Status:            {SiteDetails.status}\n"
+        f" - Peak Power:        {SiteDetails.peak_power}\n"
+        f" - Installed on:      {SiteDetails.installation_date}\n"
+        f" - Total Energy:      {SiteDetails.lifetime_energy}\n"
+        f" - Total Revenues:    {SiteDetails.lifetime_revenues} {SiteDetails.currency}\n"
+        f" - Last Update:       {SiteDetails.last_update_time}\n"
+        f" - Last Year Energy:  {SiteDetails.last_Year_Energy}\n"
+        f" - Last Month Energy: {SiteDetails.last_Month_Energy}\n"
+        f" - Last Day Energy:   {SiteDetails.last_Day_Energy}\n"
+        f" - Current Power:     {SiteDetails.current_Power}\n")
+#
+# Collect user choice
 choice = input("Please select an export method and press <enter> to confirm:\n"
         "1 - Export Daily Power Production (15mins interval)\n"
         "2 - Export Daily Energy Production (15mins interval)\n"
         "\n")
-
+#
+#Invoke the proper function to get the data based on user choice
 if choice == "1":
-    #getAllData (DataPeriod, StartYear, CurrentYear, SiteDetails, SolarEdge_SiteID, EnergyUrl, LastUpdateTime, LastUpdateDateTime)
-    getAllDataPVOutFormat (choice, SolarEdge_ExportFile, DataPeriod, StartYear, CurrentYear, PowerDetailsUrl, LastUpdateDateTime)
+    getAllDataPVOutFormat (SolarEdge_ApiKey, SolarEdge_SiteID, choice, SolarEdge_ExportFile, DataPeriod, StartYear, CurrentYear, LastUpdateDateTime)
     print("Export Completed")
 elif choice == "2":
-    getAllDataPVOutFormat (choice, SolarEdge_ExportFile, DataPeriod, StartYear, CurrentYear, EnergyUrl, LastUpdateDateTime)
+    getAllDataPVOutFormat (SolarEdge_ApiKey, SolarEdge_SiteID, choice, SolarEdge_ExportFile, DataPeriod, StartYear, CurrentYear, LastUpdateDateTime)
     print("Export Completed")
 elif choice == "3":
     print("Il pianeta è stato distrutto!")
