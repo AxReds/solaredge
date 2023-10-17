@@ -66,14 +66,36 @@ class SolarEdge_SiteData:
         response = requests.get(url)
         return response.json()
 
-#
-#Function to get sites data and return a list
-def call_SiteList(url:str, size: int = 100, startIndex: int = 0, searchText: str = 'Name', sortProperty: str = 'Name', sortOrder: str ='ASC', Status: str = 'All') -> list:
-    #Initialize an empty list to store multiline data
+# Function to get sites data and return a list
+def call_SiteList(SolarEdge_ApiKey: str, size: int = 100, startIndex: int = 0, searchText: str = 'Name', sortProperty: str = 'Name', sortOrder: str ='ASC', Status: str = 'All') -> list:
+    #Check if searchText is valid
+    ALLOWED_SEARCH_TEXT = ["Name","Notes", "Address", "City", "Zip code", "Full address",  "Country"]
+    if searchText not in ALLOWED_SEARCH_TEXT:
+        raise ValueError(f"timeUnit must be one of {ALLOWED_SEARCH_TEXT}")
+    
+    #Check if sortProperty is valid
+    ALLOWED_SORT_PROPERTY = ["Name","Country", "State", "City", "Address","Notes", "Address", "City", "Zip code", "Status",  "PeakPower", "InstallationDate", "Amount","MaxSeverity", "CreationTime"]
+    if sortProperty not in ALLOWED_SORT_PROPERTY:
+        raise ValueError(f"timeUnit must be one of {ALLOWED_SORT_PROPERTY}")
+    
+    #Check if sortOrder is valid
+    ALLOWED_SORT_ORDER = ["ASC","DESC"]
+    if sortOrder not in ALLOWED_SORT_ORDER:
+        raise ValueError(f"timeUnit must be one of {ALLOWED_SORT_ORDER}")
+    
+    #Check if Status is valid
+    ALLOWED_STATUS = ["All","Active", "Pending", "Disabled"]
+    if Status not in ALLOWED_STATUS:
+        raise ValueError(f"timeUnit must be one of {ALLOWED_STATUS}")
+
+    # Set Constant URL
+    SiteDataUrl = f"https://monitoringapi.solaredge.com/sites/list?api_key={SolarEdge_ApiKey}"
+    # Compose the URL
+    url = f"{SiteDataUrl}&size={size}&startIndex={startIndex}&searchText={searchText}&sortProperty={sortProperty}&sortOrder={sortOrder}&Status={Status}"
+
+    # Initialize an empty list to store multiline data
     multiline_data = []
     
-    #Compose the URL
-    url = f"{url}&size={size}&startIndex={startIndex}&searchText={searchText}&sortProperty={sortProperty}&sortOrder={sortOrder}&Status={Status}"
 
     # Make a GET request to the specified URL
     response = requests.get(url)
@@ -148,7 +170,6 @@ def call_SiteList(url:str, size: int = 100, startIndex: int = 0, searchText: str
         multiline_data.append(data)
     return (multiline_data)
 
-#
 #Function to get site details and return a list
 def call_SiteDetails(SolarEdge_ApiKey: str, SolarEdge_SiteID:int) -> list:
     #Set Constant URL
@@ -165,8 +186,6 @@ def call_SiteDetails(SolarEdge_ApiKey: str, SolarEdge_SiteID:int) -> list:
     SiteDetails = response.json()
     return (SiteDetails)
 
-
-#
 # Function to get production data and replace null values with "0,0"
 def call_PowerDetailed(SolarEdge_ApiKey: str, SolarEdge_SiteID: int, startTime: str, endTime: str, meters: str = "PRODUCTION") -> list:
     #Set Constant URL
@@ -201,7 +220,6 @@ def call_PowerDetailed(SolarEdge_ApiKey: str, SolarEdge_SiteID: int, startTime: 
     
     return (multiline_data)
 
-#
 # Function to get production data and replace null values with "0,0"
 def call_SiteEnergy(SolarEdge_ApiKey: str, SolarEdge_SiteID: int, startDate: str, endDate: str, timeUnit: str = Day) -> list:
     #Check if timeUnit is valid
@@ -245,7 +263,6 @@ def call_SiteEnergy(SolarEdge_ApiKey: str, SolarEdge_SiteID: int, startDate: str
     
     return (multiline_data)
 
-#
 # Function to get production data and replace null values with "0,0"
 def SolarEdge_ExportToFile(file_name: str, multiline_data: list): 
     #
@@ -263,7 +280,6 @@ def SolarEdge_ExportToFile(file_name: str, multiline_data: list):
     except Exception as e:
         print(f"Error writing data to file: {e}")
 
-#
 #New Data Extraction Method
 def getAllDataPVOutFormat (ApiKey: str, SiteID: int, Operation: int, ExportFile: str, DataPeriod: str, StartYear: int, CurrentYear: int, LastUpdateDateTime: str):
     for year in range(StartYear, CurrentYear + 1):
@@ -299,4 +315,3 @@ def getAllDataPVOutFormat (ApiKey: str, SiteID: int, Operation: int, ExportFile:
             #Export data to file
             SolarEdge_ExportToFile (ExportFile, SolarEdge_DataDictionary)
 
-            

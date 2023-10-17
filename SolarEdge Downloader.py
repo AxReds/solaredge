@@ -1,11 +1,16 @@
 #https://powershelladministrator.com/2015/11/12/download-solaredge-solar-production-data-and-save-to-csv/
 
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime
 import json, os
 from SolarEdge_functions import *
 
-#Read information from the JSON file
+
+#Clear screen depending on OS
+os.system("cls" if os.name == "nt" else "clear")
+
+
+# Read information from the JSON file
 try:
     with open('config.json', 'r') as config_file:
         SolarEdgeConfig = json.load(config_file)['SolarEdge']
@@ -16,45 +21,57 @@ except json.JSONDecodeError:
     print("Error: config.json file is not valid JSON.")
     exit(1)
 
-#
-#Access SolarEdge information in the JSON file to set constants values
+
+# Access SolarEdge information in the JSON file to set constants values
 SolarEdge_ExportFile = SolarEdgeConfig['OutputFile']
 SolarEdge_SiteID = int(SolarEdgeConfig['SiteID'])
 SolarEdge_ApiKey = SolarEdgeConfig['ApiKey']
 
-#
-#Set other constants
+
+# Set other constants
 CurrentDate = datetime.now().strftime('%Y-%m-%d')
 StartDate = CurrentDate
 EndDate = CurrentDate
-SiteDataUrl = f"https://monitoringapi.solaredge.com/sites/list?api_key={SolarEdge_ApiKey}"
 
 DataPeriodUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/dataPeriod?api_key={SolarEdge_ApiKey}"
 OverviewUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/overview?api_key={SolarEdge_ApiKey}"
 EnergyUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/energy?api_key={SolarEdge_ApiKey}"
 
-#
+
 # Get data period information from the API endpoint
 response_period = requests.get(DataPeriodUrl)
 DataPeriod = response_period.json()
 StartYear = datetime.strptime(DataPeriod['dataPeriod']['startDate'], '%Y-%m-%d').year
 CurrentYear = datetime.now().year
 
-#
-#Get site details and last update time from the overview API endpoint
-SiteDetails = SolarEdge_SiteData (SolarEdge_SiteID, SolarEdge_ApiKey)
 
-#
-#Get last update time 
+# Get site details from SolarEdge API
+SiteDetails = SolarEdge_SiteData (SolarEdge_SiteID, SolarEdge_ApiKey)
 LastUpdateTime = SiteDetails.last_update_time.split()[0]
 LastUpdateDateTime = datetime.strptime(LastUpdateTime, '%Y-%m-%d')
 
-#
-#Clear screen depending on OS
-os.system("cls" if os.name == "nt" else "clear")
+# Check if data needs to be downloaded based on last update time
+DaysAgo = (datetime.now() - LastUpdateDateTime).days
+if DaysAgo == 0:
+    print("The energy data on the monitoring portal is up to date."
+          "The program can continue.")
+elif DaysAgo == 1:
+    print("The energy data on the monitoring portal has not been updated for a day."
+        "This could be due to various reasons:\n"
+        " - The update script runs within the first 15 minutes of a new day; in that case, it's normal behavior.\n"
+        " - There might have been an interruption in the connection between the inverter and the monitoring portal.\n"
+        " - No data has been received on the monitoring portal.\n"
+        "The program can continue, but please investigate.")
+else:
+    print(f"The installation has not been updated since {LastUpdateTime}. This is {DaysAgo} days ago. "
+        "Script will continue, but it is advised to fix the error. "
+        "This script will only download the data until the date of the last available data")
 
-#
-#Print site details
+
+call_SiteList (SolarEdge_ApiKey)
+exit(0)
+
+# Print site details
 print(f"\n\nSolareEdge Site {SolarEdge_SiteID} has the following details:\n"
         f" - Name:              {SiteDetails.name}\n"
         f" - Account ID:        {SiteDetails.account_id}\n"
@@ -68,14 +85,14 @@ print(f"\n\nSolareEdge Site {SolarEdge_SiteID} has the following details:\n"
         f" - Last Month Energy: {SiteDetails.last_Month_Energy}\n"
         f" - Last Day Energy:   {SiteDetails.last_Day_Energy}\n"
         f" - Current Power:     {SiteDetails.current_Power}\n")
-#
+
 # Collect user choice
 choice = input("Please select an export method and press <enter> to confirm:\n"
         "1 - Export Daily Power Production (15mins interval)\n"
         "2 - Export Daily Energy Production (15mins interval)\n"
         "\n")
-#
-#Invoke the proper function to get the data based on user choice
+
+# Invoke the proper function to get the data based on user choice
 if choice == "1":
     getAllDataPVOutFormat (SolarEdge_ApiKey, SolarEdge_SiteID, choice, SolarEdge_ExportFile, DataPeriod, StartYear, CurrentYear, LastUpdateDateTime)
     print("Export Completed")
@@ -86,19 +103,4 @@ elif choice == "3":
     print("Il pianeta è stato distrutto!")
     # Inserisci qui il codice per l'opzione 3
 else:
-    # Check if data needs to be downloaded based on last update time
-    if LastUpdateTime != CurrentDate:
-        DaysAgo = (datetime.now() - LastUpdateDateTime).days
-        if DaysAgo == 0:
-            print("The energy data on the monitoring portal is up to date, will start downloading data if necessary")
-        elif DaysAgo == 1:
-            print("The energy data on the monitoring portal has not been updated for a day. "
-                "This might have various reasons:\n"
-                " - The update script is run within the first 15 minutes of a new day, in that case, it's usual behavior.\n"
-                " - There has been an interruption in the connection between the inverter and the monitoring portal.\n"
-                " - No data has been received on the monitoring portal.\n"
-                "Script will continue as usual.")
-        else:
-            print(f"The installation has not been updated since {LastUpdateTime}. This is {DaysAgo} days ago. "
-                "Script will continue, but it is advised to fix the error. "
-                "This script will only download the data until the date of the last available data")
+    exit(0)
