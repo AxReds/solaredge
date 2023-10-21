@@ -1,70 +1,24 @@
-#Import Declaration
-import requests
-import csv
-from datetime import datetime, timedelta
-import os
+# Description: This module contains functions to call the SolarEdge API and return the data in JSON format (most of the time).
 
-#
+#Built-in libraries
+import requests
+
+#3rd party libraries
+
+#Custom libraries
+
+
 #Set Constants based on the API documentation
 QuarterHour = "QUARTER_OF_AN_HOUR"
 Hour = "HOUR"
 Day = "DAY"
 Week = "WEEK"
-Month = "MONTH"
+Month =  "MONTH"
 Year = "YEAR"
 
-#
-# This block is executed when the module is run directly
+# This block is executed when the module runs directly
 if __name__ == "__main__":
-    # Test some examples
     print ("This is a library and cannot be ran standalone.")
-
-
-# SolarEdge_SiteData class
-class SolarEdge_SiteData:
-    def __init__(self, site_id: int, api_key: str):
-        
-        # Initialize the class variables
-        self.site_id = site_id
-        self.api_key = api_key
-        self.name = None
-        self.status = None
-        self.account_id = None
-        self.peak_power = None
-        self.installation_date = None
-        self.currency = None
-        self.last_update_time = None
-        self.lifetime_energy = None
-        self.lifetime_revenues = None
-        self.last_Year_Energy = None
-        self.last_Month_Energy = None
-        self.last_Day_Energy = None
-        self.current_Power = None
-
-        #
-        # Get site details and last update time from the site details API endpoint
-        site_details = call_SiteDetails(self.api_key, self.site_id)
-        self.name = site_details['details']['name']
-        self.status = site_details['details']['status']
-        self.account_id = site_details['details']['accountId']
-        self.peak_power = site_details['details']['peakPower']
-        self.installation_date = site_details['details']['installationDate']
-        self.currency = site_details['details']['currency']
-
-        # Get site overview information from the overview API endpoint
-        overview = self.call_Overview()
-        self.last_update_time = overview['overview']['lastUpdateTime']
-        self.lifetime_energy = overview['overview']['lifeTimeData']['energy']
-        self.lifetime_revenues = overview['overview']['lifeTimeData']['revenue']
-        self.last_Year_Energy = overview['overview']['lastYearData']['energy']
-        self.last_Month_Energy = overview['overview']['lastMonthData']['energy']
-        self.last_Day_Energy = overview['overview']['lastDayData']['energy']
-        self.current_Power = overview['overview']['currentPower']['power']
-
-    def call_Overview(self):
-        url = f"https://monitoringapi.solaredge.com/site/{self.site_id}/overview?api_key={self.api_key}"
-        response = requests.get(url)
-        return response.json()
 
 # Function returns a list of sites related to the given token, which is the account api_key.
 # The API accepts parameters for convenient search, sort and pagination.
@@ -267,7 +221,7 @@ def call_SiteEnergy_TimePeriod(SolarEdge_ApiKey: str, SolarEdge_SiteID: int, sta
  #Check if timeUnit is valid
 
     #Set Constant URL
-    EnergyUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/energy?api_key={SolarEdge_ApiKey}&startDate={startDate}&endDate={endDate}"
+    EnergyUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/timeFrameEnergy?api_key={SolarEdge_ApiKey}&startDate={startDate}&endDate={endDate}"
     
     # Make a GET request to the specified URL
     response = requests.get(EnergyUrl)
@@ -316,6 +270,24 @@ def call_SitePower15mins(SolarEdge_ApiKey: str, SolarEdge_SiteID: int, startTime
     
     return (multiline_data)
 
+# Function returns the site overview information and returns a JSON
+def call_SiteOverview (SolarEdge_ApiKey: str, SolarEdge_SiteID: int) -> list:
+    #Set Constant URL
+    OverviewUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/overview?api_key={SolarEdge_ApiKey}"
+    
+    # Make a GET request to the specified URL
+    response = requests.get(OverviewUrl)
+    
+    # Check if the request was successful
+    if response.status_code != 200:
+        print(f"Error in the request: {response.status_code}")
+        return
+
+    # Parse the JSON response
+    overview_data = response.json()
+    
+    return (overview_data)
+
 # Function returns production data and replaces null values with "0.0"
 def call_PowerDetailed(SolarEdge_ApiKey: str, SolarEdge_SiteID: int, startTime: str, endTime: str, meters: str = "PRODUCTION") -> list:
     #Set Constant URL
@@ -350,57 +322,23 @@ def call_PowerDetailed(SolarEdge_ApiKey: str, SolarEdge_SiteID: int, startTime: 
     
     return (multiline_data)
 
-# Function to get production data and replace null values with "0,0"
-def SolarEdge_ExportToFile(file_name: str, multiline_data: list): 
-    #
-    try:
-        # Write data to the CSV file
-        if not os.path.exists(file_name):
-            with open(file_name, 'w', newline='') as csvfile:
-                csvwriter = csv.writer(csvfile, delimiter=';')
-                csvwriter.writerow(['Date/Time','Value']) # Write header if the file DOES NOT EXIST
-                csvwriter.writerows(multiline_data)
-        else:
-            with open(file_name, 'a', newline='') as csvfile:
-                csvwriter = csv.writer(csvfile, delimiter=';')
-                csvwriter.writerows(multiline_data)
-    except Exception as e:
-        print(f"Error writing data to file: {e}")
+def call_SiteEnergyDetailed(SolarEdge_ApiKey: str, SolarEdge_SiteID: int, startTime: str, endTime: str, timeUnit: str ="DAY", meters: str = None) -> list:
+    #Set Constant URL
+    EnergyDetailsUrl = f"https://monitoringapi.solaredge.com/site/{SolarEdge_SiteID}/energyDetails?api_key={SolarEdge_ApiKey}&startTime={startTime}%2000:00:00&endTime={endTime}%2023:59:59&timeUnit={timeUnit}"
+    
+    # Check if meters is not None and add it to the URL if it is not None
+    if meters is not None:
+        EnergyDetailsUrl += f"&meters={meters}"
+ 
+    # Make a GET request to the specified URL
+    response = requests.get(EnergyDetailsUrl)
+    
+    # Check if the request was successful
+    if response.status_code != 200:
+        print(f"Error in the request: {response.status_code}")
+        return
 
-#New Data Extraction Method
-def getAllDataPVOutFormat (ApiKey: str, SiteID: int, Operation: int, ExportFile: str, DataPeriod: str, StartYear: int, CurrentYear: int, LastUpdateDateTime: str):
-    for year in range(StartYear, CurrentYear + 1):
-        if year == CurrentYear:
-            if StartYear == CurrentYear:
-                month = datetime.strptime(DataPeriod['dataPeriod']['startDate'], '%Y-%m-%d').month
-            else:
-                month = 1
-            last_month = datetime.now().month if LastUpdateDateTime.month >= datetime.now().month else LastUpdateDateTime.month + 1
-        else:
-            if year == StartYear:
-                month = datetime.strptime(DataPeriod['dataPeriod']['startDate'], '%Y-%m-%d').month
-            else:
-                month = 1
-            last_month = 13
-
-        for month in range(month, last_month):
-            last_day_of_month = (datetime(year, month % 12 + 1, 1) - timedelta(days=1)).day
-            str_month = "{:02d}".format(month)
-            
-            #Print the month to process
-            print (f"Processing {year}-{str_month}")
-            
-            #Check what exporting process to execute
-            if Operation == "1":
-                SolarEdge_DataDictionary = call_PowerDetailed(ApiKey, SiteID, f"{year}-{str_month}", f"{year}-{str_month}-{last_day_of_month}")
-            elif Operation == "2":
-                SolarEdge_DataDictionary = call_SiteEnergy(ApiKey, SiteID, f"{year}-{str_month}-01", f"{year}-{str_month}-{last_day_of_month}", QuarterHour)
-            elif Operation == "4":
-                SolarEdge_DataDictionary = call_SitePower15mins(ApiKey, SiteID, f"{year}-{str_month}-01", f"{year}-{str_month}-{last_day_of_month}")
-            else:
-                print ("Option not yet available")
-                exit(1)
-            
-            #Export data to file
-            SolarEdge_ExportToFile (ExportFile, SolarEdge_DataDictionary)
-
+    # Parse the JSON response
+    energy_data = response.json()
+    
+    return (energy_data)

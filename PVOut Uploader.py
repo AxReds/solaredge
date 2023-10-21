@@ -42,8 +42,14 @@
 ###############################################################################
 #
 #Library Declaration
-from PVOut_functions import *
+#Built-in Libraries
 import json
+
+#Third Party Libraries
+
+#Custom Libraries
+from pvoutput import *
+
 
 #
 # Read information from the JSON file
