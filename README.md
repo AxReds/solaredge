@@ -1,2 +1,2 @@
-# PVOut.org
- Script to upload past data to PVOut
+# SolarEdge
+ Python module wrapping export APIs from SolarEdge
