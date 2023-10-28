@@ -8,7 +8,7 @@ import os
 from datetime import datetime, timedelta
 
 #Custom libraries
-from .solaredge_functions import *
+from .functions import *
 
 # Function to get production data and replace null values with "0,0"
 def SolarEdgeExportToFile(file_name: str, multiline_data: list): 

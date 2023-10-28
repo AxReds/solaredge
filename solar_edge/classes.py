@@ -7,7 +7,7 @@ from datetime import datetime
 import requests
 
 # Import custom libraries
-from solar_edge.solaredge_functions import call_SiteDetails, call_SiteOverview
+from solar_edge.functions import call_SiteDetails, call_SiteOverview
 
 
 
