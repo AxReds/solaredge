@@ -8,7 +8,10 @@ import requests
 from datetime import datetime
 
 #custom imports
-from solaredge_exporter import SolarEdgeSiteData, getAllDataInPVOutFormat
+from solaredge_exporter import (
+    SolarEdgeSiteData, 
+    getAllDataInPVOutFormat
+)
 
 
 # Main function ==> all variables would be local to this function

@@ -2,6 +2,7 @@
 __pycache__
 build
 dist
+solaredge_exporter.egg-info
 
 
 #ignore CSV files
