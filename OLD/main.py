@@ -13,8 +13,6 @@ from solaredge_exporter import (
     getAllDataInPVOutFormat
 )
 
-
-
 # Main function ==> all variables would be local to this function
 def main():
 
@@ -24,7 +22,7 @@ def main():
 
     # Read information from the JSON file
     try:
-        with open('config.json', 'r') as config_file:
+        with open(os.path.dirname(os.path.abspath(__file__)) + '\config.json', 'r') as config_file:
             SolarEdgeConfig = json.load(config_file)['SolarEdge']
     except FileNotFoundError:
         print("Error: config.json file not found.")
