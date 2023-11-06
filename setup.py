@@ -29,5 +29,11 @@ setuptools.setup(
     #entry_points={
     #    # Define your package's entry points here
     #}
+    
+    #to ensure that the package is only deployed to test.pypi.org 
+    extras_require={
+        "dev": ["pytest>=7.0", "twine>=4.0.2"],
+    },
+    
     python_requires='>=3.6',
 )

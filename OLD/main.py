@@ -14,6 +14,7 @@ from solaredge_exporter import (
 )
 
 
+
 # Main function ==> all variables would be local to this function
 def main():
 
