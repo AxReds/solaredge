@@ -1,0 +1,2 @@
+include solar_edge/*.py
+include README.md

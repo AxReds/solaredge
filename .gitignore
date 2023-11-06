@@ -1,5 +1,8 @@
 #ignore Python Cache folder
 __pycache__
+build
+dist
+
 
 #ignore CSV files
 *.csv

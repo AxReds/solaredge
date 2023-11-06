@@ -1,0 +1,8 @@
+LICENSE
+README.md
+setup.py
+solaredge_exporter/solaredge_exporter.egg-info/PKG-INFO
+solaredge_exporter/solaredge_exporter.egg-info/SOURCES.txt
+solaredge_exporter/solaredge_exporter.egg-info/dependency_links.txt
+solaredge_exporter/solaredge_exporter.egg-info/requires.txt
+solaredge_exporter/solaredge_exporter.egg-info/top_level.txt
